@@ -16,7 +16,7 @@ parseCSV :: String -> [Ballot]
 parseCSV f = let
   (h:b) = lines f
   parties = commaSplit h
-  ranks = map (fillImplicit . map read' . commaSplit) b
+  ranks = map (fillImplicit . (++ repeat Nothing) . map read' . commaSplit) b
   read' "" = Nothing
   read' l = Just (read l)
   in map (flip zip parties) ranks
