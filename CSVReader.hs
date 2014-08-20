@@ -1,4 +1,4 @@
-module CSVReader () where
+module CSVReader (parseCSV, fillImplicit) where
 
 import SLC
 
