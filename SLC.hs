@@ -31,7 +31,7 @@ tally house ballots = let
   handicap :: Int -> [Ballot] -> [(Int,String,Rational)]
   handicap _ [] = []
   handicap n (l:r) = let
-    n' = sum $ mapMaybe (flip M.lookup house . snd) l
+    n' = n + (sum $ mapMaybe (flip M.lookup house . snd) l)
     h (r,p) = (r, p, quotient n')
     in map h l ++ handicap n' r
   pf :: (Int,String,Rational) -> (Int,String,Rational) -> Maybe ((String,String),Rational)
