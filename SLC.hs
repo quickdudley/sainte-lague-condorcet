@@ -22,18 +22,18 @@ type Tally = M.Map (String,String) (Sym Rational)
 
 type Ballot = [(Int,String)]
 
-tally :: House -> [Ballot] -> Tally
-tally house ballots = let
+tally :: [Ballot] -> Tally
+tally ballots = let
   ts = map tally1 ballots
   tally1 b' = let
     b = (handicap 0 . groupBy ((==) `on` fst) . sort) b'
     t = catMaybes $ pairsWith pf b
     in M.fromListWith (+) t
-  handicap :: Int -> [Ballot] -> [(Int,String,Sym Rational)]
+  handicap :: Sym Rational -> [Ballot] -> [(Int,String,Sym Rational)]
   handicap _ [] = []
   handicap n (l:r) = let
-    n' = sum $ mapMaybe (flip M.lookup house . snd) l
-    q = quotient $ con $ toRational n'
+    n' = n + (sum $ map (var . snd) l)
+    q = quotient n'
     h (r,p) = (r, p, q)
     in map h l ++ handicap n' r
   pf :: (Int,String,Sym Rational) -> (Int,String,Sym Rational) -> Maybe ((String,String),Sym Rational)
@@ -47,7 +47,7 @@ rpWinner :: Tally -> House -> String
 rpWinner t house = let
   tc = M.mapWithKey (\(a,b) c -> c - (maybe 0 id $ M.lookup (b,a) t)) t
   ts = M.map (unSym . substAll (M.map toRational house)) tc
-  tl = takeWhile ((>0) . snd) $ sortBy (flip compare `on` snd) $ M.toList tc
+  tl = takeWhile ((>0) . snd) $ sortBy (flip compare `on` snd) $ M.toList ts
   lck g [] = g
   lck g (((a,b),s):r)
     | circle g b a = lck g r
@@ -62,10 +62,13 @@ rpWinner t house = let
     Just q' -> sk $ head q'
   in sk s
 
-addtoHouse :: [Ballot] -> House -> House
-addtoHouse b h = M.insertWith (+) (rpWinner (tally h b) h) 1 h
+addtoHouse :: Tally -> House -> House
+addtoHouse t h = M.insertWith (+) (rpWinner t h) 1 h
 
-fillHouse b = iterate (addtoHouse b) M.empty
+fillHouse b = iterate (addtoHouse t) $ M.fromList $
+  zip (map snd $ head b) (repeat 0)
+ where
+  t = tally b
 
 pairsWith _ [] = []
 pairsWith f (a:r) = zipWith f (repeat a) r ++ pairsWith f r
