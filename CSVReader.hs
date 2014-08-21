@@ -8,6 +8,7 @@ import Data.Maybe
 commaSplit :: String -> [String]
 commaSplit [] = []
 commaSplit s = let (t,r) = cs s in trim t : commaSplit r where
+  cs [] = ("","")
   cs (',':r) = ("",r)
   cs (l:r) = let (l',r') = cs r in (l:l',r')
   trim = reverse . dropWhile ((==) ' ') . reverse . dropWhile ((==) ' ')
@@ -16,7 +17,10 @@ parseCSV :: String -> [Ballot]
 parseCSV f = let
   (h:b) = lines f
   parties = commaSplit h
-  ranks = map (fillImplicit . (++ repeat Nothing) . map read' . commaSplit) b
+  ranks = map
+    (fillImplicit . zipWith (flip const) parties 
+    . (++ repeat Nothing) . map read' . commaSplit)
+    b
   read' "" = Nothing
   read' l = Just (read l)
   in map (flip zip parties) ranks
