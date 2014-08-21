@@ -53,7 +53,7 @@ rpWinner t = let
     | a == b = True
     | otherwise = or $ map (circle g b) $ maybe [] id $ M.lookup a g
   lg = lck M.empty tl
-  (s,_) = M.findMin lg
+  ((s,_),_) = head tl
   sk q = case M.lookup q lg of
     Nothing -> q
     Just q' -> sk $ head q'

@@ -15,7 +15,7 @@ commaSplit s = let (t,r) = cs s in trim t : commaSplit r where
 
 parseCSV :: String -> [Ballot]
 parseCSV f = let
-  (h:b) = lines f
+  (h:b) = filter (not . null) $ lines f
   parties = commaSplit h
   ranks = map
     (fillImplicit . zipWith (flip const) parties 
