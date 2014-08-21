@@ -71,3 +71,7 @@ pairsWith _ [] = []
 pairsWith f (a:r) = zipWith f (repeat a) r ++ pairsWith f r
 
 pairs = pairsWith (,)
+
+substAll :: (Num a, Eq a) => M.Map String a -> Sym a -> Sym a
+substAll v s = foldr (\(n,v') s' -> subst n (con v') s') s $ M.toList v
+
