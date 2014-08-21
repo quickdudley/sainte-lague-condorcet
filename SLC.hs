@@ -43,10 +43,10 @@ tally house ballots = let
     EQ -> Nothing
   in foldr1 (M.unionWith (+)) ts
 
-rpWinner :: Tally -> String
-rpWinner t = let
+rpWinner :: Tally -> House -> String
+rpWinner t house = let
   tc = M.mapWithKey (\(a,b) c -> c - (maybe 0 id $ M.lookup (b,a) t)) t
-  ts = M.map (unSym) tc
+  ts = M.map (unSym . substAll (M.map toRational house)) tc
   tl = takeWhile ((>0) . snd) $ sortBy (flip compare `on` snd) $ M.toList tc
   lck g [] = g
   lck g (((a,b),s):r)
@@ -63,7 +63,7 @@ rpWinner t = let
   in sk s
 
 addtoHouse :: [Ballot] -> House -> House
-addtoHouse b h = M.insertWith (+) (rpWinner $ tally h b) 1 h
+addtoHouse b h = M.insertWith (+) (rpWinner (tally h b) h) 1 h
 
 fillHouse b = iterate (addtoHouse b) M.empty
 
