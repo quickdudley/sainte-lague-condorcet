@@ -10,14 +10,15 @@ module SLC (
 import Data.Function (on)
 import Data.Maybe
 import Data.List
+import Data.Number.Symbolic
 import Data.Ratio
 import qualified Data.Map as M
 
-quotient s = 1 / (2*(toRational s) + 1)
+quotient s = 1 / (2*s + 1)
 
 type House = M.Map String Int
 
-type Tally = M.Map (String,String) Rational
+type Tally = M.Map (String,String) (Sym Rational)
 
 type Ballot = [(Int,String)]
 
@@ -28,13 +29,14 @@ tally house ballots = let
     b = (handicap 0 . groupBy ((==) `on` fst) . sort) b'
     t = catMaybes $ pairsWith pf b
     in M.fromListWith (+) t
-  handicap :: Int -> [Ballot] -> [(Int,String,Rational)]
+  handicap :: Int -> [Ballot] -> [(Int,String,Sym Rational)]
   handicap _ [] = []
   handicap n (l:r) = let
     n' = sum $ mapMaybe (flip M.lookup house . snd) l
-    h (r,p) = (r, p, quotient n')
+    q = quotient $ con $ toRational n'
+    h (r,p) = (r, p, q)
     in map h l ++ handicap n' r
-  pf :: (Int,String,Rational) -> (Int,String,Rational) -> Maybe ((String,String),Rational)
+  pf :: (Int,String,Sym Rational) -> (Int,String,Sym Rational) -> Maybe ((String,String),Sym Rational)
   pf (ra,pa,qa) (rb,pb,qb) = case ra `compare` rb of
     LT -> Just ((pa,pb),qa)
     GT -> Just ((pb,pa),qb)
@@ -44,6 +46,7 @@ tally house ballots = let
 rpWinner :: Tally -> String
 rpWinner t = let
   tc = M.mapWithKey (\(a,b) c -> c - (maybe 0 id $ M.lookup (b,a) t)) t
+  ts = M.map (unSym) tc
   tl = takeWhile ((>0) . snd) $ sortBy (flip compare `on` snd) $ M.toList tc
   lck g [] = g
   lck g (((a,b),s):r)
