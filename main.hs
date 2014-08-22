@@ -20,6 +20,7 @@ main = do
 
 formatHouse = intercalate "\n" .
   map f1 .
+  takeWhile ((>0) . snd) .
   sortBy (flip compare `on` snd) .
   M.toList
  where
